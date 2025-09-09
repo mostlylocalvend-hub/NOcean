@@ -9,60 +9,77 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: #f9fafb;
       display: flex;
       height: 100vh;
+      background: #f9fafb;
     }
     .sidebar {
-      width: 35%;
+      width: 30%;
       padding: 20px;
-      overflow-y: auto;
       background: #f3f4f6;
+      overflow-y: auto;
       box-shadow: inset -1px 0 5px rgba(0,0,0,0.05);
     }
-    h1 { font-size: 2em; margin-bottom: 20px; }
     .card {
       background: white;
       padding: 15px;
+      margin-bottom: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
     }
-    ul { list-style: none; padding: 0; }
-    li {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      margin-bottom: 8px;
-      background: #fff;
-      cursor: grab;
+    h1 { margin: 0 0 20px; }
+    h2 { margin: 0 0 10px; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { margin-bottom: 6px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; background: #fff; cursor: pointer; }
+    textarea, input, select, button {
+      font-family: inherit;
     }
-    li.done { background: #d1fae5; text-decoration: line-through; }
     textarea {
       width: 100%;
-      height: 120px;
-      padding: 8px;
-      border: 1px solid #ccc;
+      min-height: 100px;
+      padding: 6px;
       border-radius: 5px;
+      border: 1px solid #ccc;
     }
+    .form-row { display: flex; gap: 5px; margin-bottom: 6px; }
+    .form-row input, .form-row select { flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+    .form-row button { padding: 6px 12px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .form-row button:hover { background: #4f46e5; }
 
     .whiteboard {
       flex: 1;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
       position: relative;
-    }
-    .board {
-      flex: 1;
+      margin: 20px;
+      background: white;
       border: 2px solid #ddd;
       border-radius: 8px;
-      background: white;
-      position: relative;
       overflow: hidden;
     }
+    .draggable {
+      position: absolute;
+      background: #6366f1;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: grab;
+      font-size: 0.9em;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-width: 120px;
+    }
+    .draggable span[contenteditable] { outline: none; flex: 1; }
+    .draggable button {
+      margin-left: 8px;
+      background: none;
+      border: none;
+      color: #f87171;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-    /* Axis labels */
+    /* Axes */
     .x-axis {
       position: absolute;
       bottom: -35px;
@@ -71,13 +88,6 @@
       display: flex;
       justify-content: space-between;
       padding: 0 10px;
-    }
-    .x-axis input {
-      border: none;
-      background: #eef2ff;
-      padding: 4px 8px;
-      border-radius: 4px;
-      text-align: center;
     }
     .y-axis {
       position: absolute;
@@ -89,131 +99,158 @@
       justify-content: space-between;
       align-items: center;
     }
-    .y-axis input {
-      transform: rotate(-90deg);
-      width: 120px;
+    .x-axis input, .y-axis input {
       border: none;
       background: #eef2ff;
-      padding: 4px;
+      padding: 4px 8px;
       border-radius: 4px;
       text-align: center;
     }
-
-    /* Draggable notes */
-    .draggable {
-      position: absolute;
-      padding: 6px 10px;
-      background: #6366f1;
-      color: white;
-      border-radius: 6px;
-      cursor: grab;
-      font-size: 0.9em;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      user-select: none;
-    }
-    .draggable button {
-      margin-left: 8px;
-      background: none;
-      border: none;
-      color: #f87171;
-      font-weight: bold;
-      cursor: pointer;
-    }
+    .y-axis input { transform: rotate(-90deg); width: 120px; }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <h1>NOcean</h1>
+
+    <div class="card">
+      <h2>Add Bite</h2>
+      <form id="biteForm">
+        <div class="form-row"><input id="biteContent" placeholder="Content"></div>
+        <div class="form-row"><input id="biteResponsible" placeholder="Responsible"></div>
+        <div class="form-row">
+          <select id="biteStatus"></select>
+          <select id="biteCategory"></select>
+        </div>
+        <div class="form-row"><button type="submit">Add Bite</button></div>
+      </form>
+    </div>
+
     <div class="card">
       <h2>Tasks</h2>
       <ul id="taskList">
-        <li draggable="true">Design homepage</li>
-        <li draggable="true" class="done">Plan marketing strategy</li>
+        <li contenteditable="true">Design homepage</li>
+        <li contenteditable="true">Plan marketing strategy</li>
       </ul>
     </div>
 
     <div class="card">
       <h2>Calendar</h2>
-      <p style="color: gray;">Upcoming events will appear here.</p>
+      <p contenteditable="true" style="color: gray;">Upcoming events will appear here.</p>
     </div>
 
     <div class="card">
       <h2>Notes</h2>
-      <textarea placeholder="Write your notes here..."></textarea>
+      <textarea contenteditable="true" placeholder="Write your notes here..."></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Status Options</h2>
+      <div id="statusOptions"></div>
+      <div class="form-row"><input id="newStatusInput" placeholder="Add status"><button onclick="addStatusOption()">+</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Category Options</h2>
+      <div id="categoryOptions"></div>
+      <div class="form-row"><input id="newCategoryInput" placeholder="Add category"><button onclick="addCategoryOption()">+</button></div>
     </div>
   </div>
 
-  <div class="whiteboard">
-    <div class="board" id="board">
-      <!-- Y-axis -->
-      <div class="y-axis">
-        <input value="Most Important">
-        <input value="Important">
-        <input value="Neutral">
-        <input value="Less Important">
-        <input value="Least Important">
-      </div>
-      <!-- X-axis -->
-      <div class="x-axis">
-        <input value="ASAP">
-        <input value="Needs to be Done">
-        <input value="Later (2025)">
-        <input value="Much Later (2026)">
-        <input value="Much Much Later (2027)">
-      </div>
+  <div class="whiteboard" id="board">
+    <!-- Axis labels -->
+    <div class="x-axis" id="xLabels">
+      <input value="ASAP">
+      <input value="Needs to be Done">
+      <input value="Later (2025)">
+      <input value="Much Later (2026)">
+      <input value="Much Much Later (2027)">
+    </div>
+    <div class="y-axis" id="yLabels">
+      <input value="Most Important">
+      <input value="Important">
+      <input value="Neutral">
+      <input value="Less Important">
+      <input value="Least Important">
     </div>
   </div>
 
   <script>
-    // Make task draggable into board
-    const taskList = document.getElementById("taskList");
     const board = document.getElementById("board");
-    let draggedTaskText = null;
+    const statusSelect = document.getElementById("biteStatus");
+    const categorySelect = document.getElementById("biteCategory");
+    let statusOptions = ["New", "In Progress", "Done"];
+    let categoryOptions = ["General", "Solstice Rooms", "Atrium Project", "Safeway Ops"];
 
-    taskList.addEventListener("dragstart", e => {
-      if(e.target.tagName === "LI"){
-        draggedTaskText = e.target.innerText;
-      }
-    });
+    // Render options
+    function renderOptions(list, container, select){
+      container.innerHTML = "";
+      select.innerHTML = "";
+      list.forEach((opt,i) => {
+        const pill = document.createElement("span");
+        pill.textContent = opt;
+        pill.style.marginRight = "8px";
+        pill.style.background = "#e0e7ff";
+        pill.style.padding = "2px 8px";
+        pill.style.borderRadius = "12px";
+        container.appendChild(pill);
+        const option = document.createElement("option");
+        option.value = opt; option.textContent = opt;
+        select.appendChild(option);
+      });
+    }
+    function addStatusOption(){
+      const val = document.getElementById("newStatusInput").value.trim();
+      if(val){ statusOptions.push(val); renderOptions(statusOptions, document.getElementById("statusOptions"), statusSelect); }
+    }
+    function addCategoryOption(){
+      const val = document.getElementById("newCategoryInput").value.trim();
+      if(val){ categoryOptions.push(val); renderOptions(categoryOptions, document.getElementById("categoryOptions"), categorySelect); }
+    }
 
-    board.addEventListener("dragover", e => e.preventDefault());
-    board.addEventListener("drop", e => {
+    // Bite form
+    document.getElementById("biteForm").onsubmit = function(e){
       e.preventDefault();
-      if(draggedTaskText){
-        const newNote = createDraggable(draggedTaskText, e.offsetX, e.offsetY);
-        board.appendChild(newNote);
-        draggedTaskText = null;
+      const content = document.getElementById("biteContent").value;
+      const resp = document.getElementById("biteResponsible").value;
+      const status = statusSelect.value;
+      const cat = categorySelect.value;
+      if(content && resp){
+        createBite(`${content} — ${resp} [${status}/${cat}]`, 100, 100);
+        e.target.reset();
       }
-    });
+    };
 
-    // Create draggable sticky note
-    function createDraggable(text, x, y){
+    // Create bite
+    function createBite(text,x,y){
       const item = document.createElement("div");
       item.className = "draggable";
-      item.style.left = x + "px";
-      item.style.top = y + "px";
-      item.innerHTML = `<span>${text}</span> <button onclick="this.parentElement.remove()">×</button>`;
+      item.style.left = x + "px"; item.style.top = y + "px";
+      item.innerHTML = `<span contenteditable="true">${text}</span><button onclick="this.parentElement.remove()">×</button>`;
+      enableDrag(item);
+      board.appendChild(item);
+    }
 
-      // Enable dragging within board
+    // Enable drag
+    function enableDrag(el){
       let offsetX, offsetY;
-      item.addEventListener("mousedown", e => {
-        if(e.target.tagName === "BUTTON") return; // skip delete button
-        offsetX = e.offsetX;
-        offsetY = e.offsetY;
+      el.addEventListener("mousedown", e => {
+        if(e.target.tagName === "BUTTON") return;
+        offsetX = e.offsetX; offsetY = e.offsetY;
         function onMouseMove(ev){
-          item.style.left = (ev.pageX - board.offsetLeft - offsetX) + "px";
-          item.style.top = (ev.pageY - board.offsetTop - offsetY) + "px";
+          el.style.left = (ev.pageX - board.offsetLeft - offsetX) + "px";
+          el.style.top = (ev.pageY - board.offsetTop - offsetY) + "px";
         }
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", () => {
           document.removeEventListener("mousemove", onMouseMove);
         }, { once: true });
       });
-
-      return item;
     }
+
+    // Init
+    renderOptions(statusOptions, document.getElementById("statusOptions"), statusSelect);
+    renderOptions(categoryOptions, document.getElementById("categoryOptions"), categorySelect);
   </script>
 </body>
 </html>
