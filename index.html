@@ -5,27 +5,119 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NOcean</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f9fafb; display: flex; height: 100vh; }
-    .sidebar { width: 35%; padding: 20px; overflow-y: auto; background: #f3f4f6; box-shadow: inset -1px 0 5px rgba(0,0,0,0.05); }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9fafb;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 35%;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f3f4f6;
+      box-shadow: inset -1px 0 5px rgba(0,0,0,0.05);
+    }
     h1 { font-size: 2em; margin-bottom: 20px; }
-    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
     ul { list-style: none; padding: 0; }
-    li { padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 8px; cursor: pointer; }
+    li {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
     li.done { background: #d1fae5; text-decoration: line-through; }
-    textarea { width: 100%; height: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
 
-    .whiteboard { flex: 1; padding: 20px; display: flex; flex-direction: column; position: relative; }
-    .board { flex: 1; border: 2px solid #ddd; border-radius: 8px; background: white; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); position: relative; }
+    .whiteboard {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .board {
+      flex: 1;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      position: relative;
+    }
     .board div { border: 1px dashed #ddd; position: relative; }
 
-    .x-axis { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 6px; }
-    .x-axis input { border: none; background: #eef2ff; padding: 4px 8px; border-radius: 4px; text-align: center; }
+    /* X-axis labels */
+    .x-axis {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      margin-top: 6px;
+    }
+    .x-axis input {
+      border: none;
+      background: #eef2ff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-align: center;
+    }
 
-    .y-axis { position: absolute; left: -65px; top: 0; bottom: 0; display: grid; grid-template-rows: repeat(5, 1fr); justify-items: center; }
-    .y-axis input { transform: rotate(-90deg); width: 120px; border: none; background: #eef2ff; padding: 4px; border-radius: 4px; }
+    /* Y-axis labels */
+    .y-axis {
+      position: absolute;
+      left: -80px;
+      top: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-rows: repeat(5, 1fr);
+      align-items: center;
+    }
+    .y-axis input {
+      transform: rotate(-90deg);
+      width: 100px;
+      border: none;
+      background: #eef2ff;
+      padding: 4px;
+      border-radius: 4px;
+      text-align: center;
+    }
 
-    .draggable { padding: 6px 10px; background: #6366f1; color: white; border-radius: 6px; cursor: grab; font-size: 0.9em; margin: 2px; display: flex; justify-content: space-between; align-items: center; }
-    .draggable button { margin-left: 8px; background: none; border: none; color: #f87171; font-weight: bold; cursor: pointer; }
+    .draggable {
+      padding: 6px 10px;
+      background: #6366f1;
+      color: white;
+      border-radius: 6px;
+      cursor: grab;
+      font-size: 0.9em;
+      margin: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .draggable button {
+      margin-left: 8px;
+      background: none;
+      border: none;
+      color: #f87171;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -52,11 +144,14 @@
 
   <div class="whiteboard">
     <div class="board" id="board">
+      <!-- Grid cells -->
       <div></div><div></div><div></div><div></div><div></div>
       <div></div><div></div><div></div><div></div><div></div>
       <div></div><div></div><div></div><div></div><div></div>
       <div></div><div></div><div></div><div></div><div></div>
       <div></div><div></div><div></div><div></div><div></div>
+
+      <!-- Y-axis labels -->
       <div class="y-axis" id="yLabels">
         <input value="Most Important">
         <input value="Important">
@@ -65,6 +160,8 @@
         <input value="Least Important">
       </div>
     </div>
+
+    <!-- X-axis labels -->
     <div class="x-axis" id="xLabels">
       <input value="ASAP">
       <input value="Needs to be Done">
@@ -76,7 +173,9 @@
 
   <script>
     // Task toggling
-    function toggleTask(element) { element.classList.toggle("done"); }
+    function toggleTask(element) {
+      element.classList.toggle("done");
+    }
 
     // Drag and drop
     let dragged;
@@ -97,15 +196,16 @@
       });
     });
 
-    // Example draggable items
+    // Create draggable items
     function createDraggable(text){
       const item = document.createElement("div");
       item.className = "draggable";
       item.setAttribute("draggable", true);
-      item.innerHTML = `<span>${text}</span> <button onclick=\"this.parentElement.remove()\">×</button>`;
+      item.innerHTML = `<span>${text}</span> <button onclick="this.parentElement.remove()">×</button>`;
       return item;
     }
 
+    // Add example item
     const board = document.getElementById("board");
     board.querySelector("div").appendChild(createDraggable("Example Item"));
   </script>
