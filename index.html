@@ -29,16 +29,7 @@
     }
     h1 { margin: 0 0 20px; }
     h2 { margin: 0 0 10px; }
-    ul { list-style: none; padding: 0; margin: 0; }
-    li { margin-bottom: 6px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; background: #fff; cursor: pointer; }
     textarea, input, select, button { font-family: inherit; }
-    textarea {
-      width: 100%;
-      min-height: 100px;
-      padding: 6px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
     .form-row { display: flex; gap: 5px; margin-bottom: 6px; }
     .form-row input, .form-row select { flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
     .form-row button { padding: 6px 12px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; }
@@ -60,16 +51,19 @@
       padding: 6px 10px;
       border-radius: 6px;
       cursor: grab;
-      font-size: 0.9em;
+      font-size: 0.85em;
       user-select: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      min-width: 120px;
+      min-width: 150px;
     }
-    .draggable span[contenteditable] { outline: none; flex: 1; }
+    .draggable div[contenteditable] {
+      outline: none;
+      margin: 2px 0;
+      background: rgba(255,255,255,0.15);
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
     .draggable button {
-      margin-left: 8px;
+      margin-top: 4px;
       background: none;
       border: none;
       color: #f87171;
@@ -139,21 +133,15 @@
     </div>
 
     <div class="card">
-      <h2>Tasks</h2>
-      <ul id="taskList">
-        <li contenteditable="true">Design homepage</li>
-        <li contenteditable="true">Plan marketing strategy</li>
-      </ul>
+      <h2>Status Options</h2>
+      <div id="statusOptions"></div>
+      <div class="form-row"><input id="newStatusInput" placeholder="Add status"><button onclick="addStatusOption()">+</button></div>
     </div>
 
     <div class="card">
-      <h2>Calendar</h2>
-      <p contenteditable="true" style="color: gray;">Upcoming events will appear here.</p>
-    </div>
-
-    <div class="card">
-      <h2>Notes</h2>
-      <textarea contenteditable="true" placeholder="Write your notes here..."></textarea>
+      <h2>Category Options</h2>
+      <div id="categoryOptions"></div>
+      <div class="form-row"><input id="newCategoryInput" placeholder="Add category"><button onclick="addCategoryOption()">+</button></div>
     </div>
   </div>
 
@@ -177,13 +165,63 @@
 
   <script>
     const board = document.getElementById("board");
+    const statusSelect = document.getElementById("biteStatus");
+    const categorySelect = document.getElementById("biteCategory");
+
+    let statusOptions = JSON.parse(localStorage.getItem("nocean_status") || `["New","In Progress","Done"]`);
+    let categoryOptions = JSON.parse(localStorage.getItem("nocean_category") || `["General","Solstice Rooms","Atrium Project","Safeway Ops"]`);
+
+    // Render options
+    function renderOptions(list, container, select, key){
+      container.innerHTML = "";
+      select.innerHTML = "";
+      list.forEach(opt => {
+        const pill = document.createElement("span");
+        pill.textContent = opt;
+        pill.style.marginRight = "8px";
+        pill.style.background = "#e0e7ff";
+        pill.style.padding = "2px 8px";
+        pill.style.borderRadius = "12px";
+        container.appendChild(pill);
+        const option = document.createElement("option");
+        option.value = opt; option.textContent = opt;
+        select.appendChild(option);
+      });
+      localStorage.setItem(key, JSON.stringify(list));
+    }
+    function addStatusOption(){
+      const val = document.getElementById("newStatusInput").value.trim();
+      if(val){ statusOptions.push(val); renderOptions(statusOptions, document.getElementById("statusOptions"), statusSelect, "nocean_status"); }
+    }
+    function addCategoryOption(){
+      const val = document.getElementById("newCategoryInput").value.trim();
+      if(val){ categoryOptions.push(val); renderOptions(categoryOptions, document.getElementById("categoryOptions"), categorySelect, "nocean_category"); }
+    }
+
+    // Bite form
+    document.getElementById("biteForm").onsubmit = function(e){
+      e.preventDefault();
+      const content = document.getElementById("biteContent").value;
+      const resp = document.getElementById("biteResponsible").value;
+      const status = statusSelect.value;
+      const cat = categorySelect.value;
+      if(content && resp){
+        createBite({content, resp, status, cat, x:100, y:100});
+        e.target.reset();
+      }
+    };
 
     // Create bite
-    function createBite(text,x,y){
+    function createBite(b){
       const item = document.createElement("div");
       item.className = "draggable";
-      item.style.left = x + "px"; item.style.top = y + "px";
-      item.innerHTML = `<span contenteditable="true">${text}</span><button onclick="this.parentElement.remove(); saveData()">×</button>`;
+      item.style.left = b.x + "px"; item.style.top = b.y + "px";
+      item.innerHTML = `
+        <div contenteditable="true">${b.content}</div>
+        <div contenteditable="true">Resp: ${b.resp}</div>
+        <div contenteditable="true">Status: ${b.status}</div>
+        <div contenteditable="true">Category: ${b.cat}</div>
+        <button onclick="this.parentElement.remove(); saveData()">×</button>`;
       enableDrag(item);
       board.appendChild(item);
       saveData();
@@ -207,31 +245,29 @@
       });
     }
 
-    // Form
-    document.getElementById("biteForm").onsubmit = function(e){
-      e.preventDefault();
-      const content = document.getElementById("biteContent").value;
-      const resp = document.getElementById("biteResponsible").value;
-      if(content && resp){
-        createBite(`${content} — ${resp}`, 100, 100);
-        e.target.reset();
-      }
-    };
-
     // Save/Load
     function saveData(){
-      const bites = [...document.querySelectorAll(".draggable")].map(el => ({
-        text: el.querySelector("span").innerText,
-        x: el.style.left,
-        y: el.style.top
-      }));
+      const bites = [...document.querySelectorAll(".draggable")].map(el => {
+        const divs = el.querySelectorAll("div[contenteditable]");
+        return {
+          content: divs[0].innerText,
+          resp: divs[1].innerText.replace("Resp: ",""),
+          status: divs[2].innerText.replace("Status: ",""),
+          cat: divs[3].innerText.replace("Category: ",""),
+          x: el.style.left.replace("px",""),
+          y: el.style.top.replace("px","")
+        };
+      });
       localStorage.setItem("nocean_bites", JSON.stringify(bites));
     }
     function loadData(){
       const data = JSON.parse(localStorage.getItem("nocean_bites") || "[]");
-      data.forEach(b => createBite(b.text, parseInt(b.x), parseInt(b.y)));
+      data.forEach(b => createBite(b));
     }
 
+    // Init
+    renderOptions(statusOptions, document.getElementById("statusOptions"), statusSelect, "nocean_status");
+    renderOptions(categoryOptions, document.getElementById("categoryOptions"), categorySelect, "nocean_category");
     loadData();
   </script>
 </body>
