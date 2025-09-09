@@ -31,9 +31,7 @@
     h2 { margin: 0 0 10px; }
     ul { list-style: none; padding: 0; margin: 0; }
     li { margin-bottom: 6px; padding: 6px; border: 1px solid #ddd; border-radius: 5px; background: #fff; cursor: pointer; }
-    textarea, input, select, button {
-      font-family: inherit;
-    }
+    textarea, input, select, button { font-family: inherit; }
     textarea {
       width: 100%;
       min-height: 100px;
@@ -79,34 +77,48 @@
       cursor: pointer;
     }
 
-    /* Axes */
-    .x-axis {
+    /* Axis sections */
+    .x-axis-sections {
       position: absolute;
-      bottom: -35px;
+      bottom: 0;
       left: 0;
       right: 0;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 10px;
+      height: 30px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border-top: 2px solid #ddd;
     }
-    .y-axis {
+    .x-axis-sections div {
+      border-left: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.8em;
+      background: #f9fafb;
+    }
+    .x-axis-sections div:first-child { border-left: none; }
+
+    .y-axis-sections {
       position: absolute;
       top: 0;
       bottom: 0;
-      left: -80px;
+      left: 0;
+      width: 60px;
+      display: grid;
+      grid-template-rows: repeat(3, 1fr);
+      border-right: 2px solid #ddd;
+    }
+    .y-axis-sections div {
+      border-top: 1px solid #ccc;
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
+      font-size: 0.8em;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      background: #f9fafb;
     }
-    .x-axis input, .y-axis input {
-      border: none;
-      background: #eef2ff;
-      padding: 4px 8px;
-      border-radius: 4px;
-      text-align: center;
-    }
-    .y-axis input { transform: rotate(-90deg); width: 120px; }
+    .y-axis-sections div:first-child { border-top: none; }
   </style>
 </head>
 <body>
@@ -143,92 +155,38 @@
       <h2>Notes</h2>
       <textarea contenteditable="true" placeholder="Write your notes here..."></textarea>
     </div>
-
-    <div class="card">
-      <h2>Status Options</h2>
-      <div id="statusOptions"></div>
-      <div class="form-row"><input id="newStatusInput" placeholder="Add status"><button onclick="addStatusOption()">+</button></div>
-    </div>
-
-    <div class="card">
-      <h2>Category Options</h2>
-      <div id="categoryOptions"></div>
-      <div class="form-row"><input id="newCategoryInput" placeholder="Add category"><button onclick="addCategoryOption()">+</button></div>
-    </div>
   </div>
 
   <div class="whiteboard" id="board">
-    <!-- Axis labels -->
-    <div class="x-axis" id="xLabels">
-      <input value="ASAP">
-      <input value="Needs to be Done">
-      <input value="Later (2025)">
-      <input value="Much Later (2026)">
-      <input value="Much Much Later (2027)">
+    <!-- Aesthetic X-axis -->
+    <div class="x-axis-sections">
+      <div>ASAP</div>
+      <div>Needs to be Done</div>
+      <div>Later (2025)</div>
+      <div>Much Later (2026)</div>
+      <div>Much Much Later (2027)</div>
     </div>
-    <div class="y-axis" id="yLabels">
-      <input value="Most Important">
-      <input value="Important">
-      <input value="Neutral">
-      <input value="Less Important">
-      <input value="Least Important">
+
+    <!-- Aesthetic Y-axis -->
+    <div class="y-axis-sections">
+      <div>Extreme</div>
+      <div>Moderate Difficulty</div>
+      <div>Easy to do</div>
     </div>
   </div>
 
   <script>
     const board = document.getElementById("board");
-    const statusSelect = document.getElementById("biteStatus");
-    const categorySelect = document.getElementById("biteCategory");
-    let statusOptions = ["New", "In Progress", "Done"];
-    let categoryOptions = ["General", "Solstice Rooms", "Atrium Project", "Safeway Ops"];
-
-    // Render options
-    function renderOptions(list, container, select){
-      container.innerHTML = "";
-      select.innerHTML = "";
-      list.forEach((opt,i) => {
-        const pill = document.createElement("span");
-        pill.textContent = opt;
-        pill.style.marginRight = "8px";
-        pill.style.background = "#e0e7ff";
-        pill.style.padding = "2px 8px";
-        pill.style.borderRadius = "12px";
-        container.appendChild(pill);
-        const option = document.createElement("option");
-        option.value = opt; option.textContent = opt;
-        select.appendChild(option);
-      });
-    }
-    function addStatusOption(){
-      const val = document.getElementById("newStatusInput").value.trim();
-      if(val){ statusOptions.push(val); renderOptions(statusOptions, document.getElementById("statusOptions"), statusSelect); }
-    }
-    function addCategoryOption(){
-      const val = document.getElementById("newCategoryInput").value.trim();
-      if(val){ categoryOptions.push(val); renderOptions(categoryOptions, document.getElementById("categoryOptions"), categorySelect); }
-    }
-
-    // Bite form
-    document.getElementById("biteForm").onsubmit = function(e){
-      e.preventDefault();
-      const content = document.getElementById("biteContent").value;
-      const resp = document.getElementById("biteResponsible").value;
-      const status = statusSelect.value;
-      const cat = categorySelect.value;
-      if(content && resp){
-        createBite(`${content} — ${resp} [${status}/${cat}]`, 100, 100);
-        e.target.reset();
-      }
-    };
 
     // Create bite
     function createBite(text,x,y){
       const item = document.createElement("div");
       item.className = "draggable";
       item.style.left = x + "px"; item.style.top = y + "px";
-      item.innerHTML = `<span contenteditable="true">${text}</span><button onclick="this.parentElement.remove()">×</button>`;
+      item.innerHTML = `<span contenteditable="true">${text}</span><button onclick="this.parentElement.remove(); saveData()">×</button>`;
       enableDrag(item);
       board.appendChild(item);
+      saveData();
     }
 
     // Enable drag
@@ -244,13 +202,37 @@
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", () => {
           document.removeEventListener("mousemove", onMouseMove);
+          saveData();
         }, { once: true });
       });
     }
 
-    // Init
-    renderOptions(statusOptions, document.getElementById("statusOptions"), statusSelect);
-    renderOptions(categoryOptions, document.getElementById("categoryOptions"), categorySelect);
+    // Form
+    document.getElementById("biteForm").onsubmit = function(e){
+      e.preventDefault();
+      const content = document.getElementById("biteContent").value;
+      const resp = document.getElementById("biteResponsible").value;
+      if(content && resp){
+        createBite(`${content} — ${resp}`, 100, 100);
+        e.target.reset();
+      }
+    };
+
+    // Save/Load
+    function saveData(){
+      const bites = [...document.querySelectorAll(".draggable")].map(el => ({
+        text: el.querySelector("span").innerText,
+        x: el.style.left,
+        y: el.style.top
+      }));
+      localStorage.setItem("nocean_bites", JSON.stringify(bites));
+    }
+    function loadData(){
+      const data = JSON.parse(localStorage.getItem("nocean_bites") || "[]");
+      data.forEach(b => createBite(b.text, parseInt(b.x), parseInt(b.y)));
+    }
+
+    loadData();
   </script>
 </body>
 </html>
