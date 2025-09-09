@@ -34,7 +34,8 @@
       border: 1px solid #ddd;
       border-radius: 5px;
       margin-bottom: 8px;
-      cursor: pointer;
+      background: #fff;
+      cursor: grab;
     }
     li.done { background: #d1fae5; text-decoration: line-through; }
     textarea {
@@ -57,18 +58,19 @@
       border: 2px solid #ddd;
       border-radius: 8px;
       background: white;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(5, 1fr);
       position: relative;
+      overflow: hidden;
     }
-    .board div { border: 1px dashed #ddd; position: relative; }
 
-    /* X-axis labels */
+    /* Axis labels */
     .x-axis {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      margin-top: 6px;
+      position: absolute;
+      bottom: -35px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10px;
     }
     .x-axis input {
       border: none;
@@ -77,20 +79,19 @@
       border-radius: 4px;
       text-align: center;
     }
-
-    /* Y-axis labels */
     .y-axis {
       position: absolute;
-      left: -80px;
       top: 0;
       bottom: 0;
-      display: grid;
-      grid-template-rows: repeat(5, 1fr);
+      left: -80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
     }
     .y-axis input {
       transform: rotate(-90deg);
-      width: 100px;
+      width: 120px;
       border: none;
       background: #eef2ff;
       padding: 4px;
@@ -98,17 +99,19 @@
       text-align: center;
     }
 
+    /* Draggable notes */
     .draggable {
+      position: absolute;
       padding: 6px 10px;
       background: #6366f1;
       color: white;
       border-radius: 6px;
       cursor: grab;
       font-size: 0.9em;
-      margin: 2px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      user-select: none;
     }
     .draggable button {
       margin-left: 8px;
@@ -126,8 +129,8 @@
     <div class="card">
       <h2>Tasks</h2>
       <ul id="taskList">
-        <li onclick="toggleTask(this)">Design homepage</li>
-        <li onclick="toggleTask(this)" class="done">Plan marketing strategy</li>
+        <li draggable="true">Design homepage</li>
+        <li draggable="true" class="done">Plan marketing strategy</li>
       </ul>
     </div>
 
@@ -144,70 +147,73 @@
 
   <div class="whiteboard">
     <div class="board" id="board">
-      <!-- Grid cells -->
-      <div></div><div></div><div></div><div></div><div></div>
-      <div></div><div></div><div></div><div></div><div></div>
-      <div></div><div></div><div></div><div></div><div></div>
-      <div></div><div></div><div></div><div></div><div></div>
-      <div></div><div></div><div></div><div></div><div></div>
-
-      <!-- Y-axis labels -->
-      <div class="y-axis" id="yLabels">
+      <!-- Y-axis -->
+      <div class="y-axis">
         <input value="Most Important">
         <input value="Important">
         <input value="Neutral">
         <input value="Less Important">
         <input value="Least Important">
       </div>
-    </div>
-
-    <!-- X-axis labels -->
-    <div class="x-axis" id="xLabels">
-      <input value="ASAP">
-      <input value="Needs to be Done">
-      <input value="Later (2025)">
-      <input value="Much Later (2026)">
-      <input value="Much Much Later (2027)">
+      <!-- X-axis -->
+      <div class="x-axis">
+        <input value="ASAP">
+        <input value="Needs to be Done">
+        <input value="Later (2025)">
+        <input value="Much Later (2026)">
+        <input value="Much Much Later (2027)">
+      </div>
     </div>
   </div>
 
   <script>
-    // Task toggling
-    function toggleTask(element) {
-      element.classList.toggle("done");
-    }
+    // Make task draggable into board
+    const taskList = document.getElementById("taskList");
+    const board = document.getElementById("board");
+    let draggedTaskText = null;
 
-    // Drag and drop
-    let dragged;
-    document.addEventListener("dragstart", function(e) {
-      if(e.target.classList.contains("draggable")){
-        dragged = e.target;
-        e.target.style.opacity = 0.5;
+    taskList.addEventListener("dragstart", e => {
+      if(e.target.tagName === "LI"){
+        draggedTaskText = e.target.innerText;
       }
     });
-    document.addEventListener("dragend", function(e) {
-      if(dragged){ dragged.style.opacity = ""; }
-    });
-    document.querySelectorAll(".board div").forEach(cell => {
-      cell.addEventListener("dragover", e => e.preventDefault());
-      cell.addEventListener("drop", function(e){
-        e.preventDefault();
-        if(dragged){ this.appendChild(dragged); }
-      });
+
+    board.addEventListener("dragover", e => e.preventDefault());
+    board.addEventListener("drop", e => {
+      e.preventDefault();
+      if(draggedTaskText){
+        const newNote = createDraggable(draggedTaskText, e.offsetX, e.offsetY);
+        board.appendChild(newNote);
+        draggedTaskText = null;
+      }
     });
 
-    // Create draggable items
-    function createDraggable(text){
+    // Create draggable sticky note
+    function createDraggable(text, x, y){
       const item = document.createElement("div");
       item.className = "draggable";
-      item.setAttribute("draggable", true);
+      item.style.left = x + "px";
+      item.style.top = y + "px";
       item.innerHTML = `<span>${text}</span> <button onclick="this.parentElement.remove()">×</button>`;
+
+      // Enable dragging within board
+      let offsetX, offsetY;
+      item.addEventListener("mousedown", e => {
+        if(e.target.tagName === "BUTTON") return; // skip delete button
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+        function onMouseMove(ev){
+          item.style.left = (ev.pageX - board.offsetLeft - offsetX) + "px";
+          item.style.top = (ev.pageY - board.offsetTop - offsetY) + "px";
+        }
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", () => {
+          document.removeEventListener("mousemove", onMouseMove);
+        }, { once: true });
+      });
+
       return item;
     }
-
-    // Add example item
-    const board = document.getElementById("board");
-    board.querySelector("div").appendChild(createDraggable("Example Item"));
   </script>
 </body>
 </html>
